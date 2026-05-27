@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xgpt — AI Agency by Zaheer Zaheer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800;900&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#020408;--bg2:#060c14;--card:rgba(6,18,36,.92);--blue:#00d4ff;--green:#00ff88;--purple:#7b2fff;--pink:#ff2d78;--dim:#4a6a80;--text:#e8f4ff;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;overflow-x:hidden;cursor:none;}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:var(--blue);border-radius:3px;}
+
+/* CURSOR */
+#cur{position:fixed;width:10px;height:10px;background:var(--blue);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:transform .1s;}
+#ring{position:fixed;width:32px;height:32px;border:1px solid rgba(0,212,255,.35);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all .22s ease;}
+canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* ANIMATIONS */
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fu{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sh{0%{background-position:0%}100%{background-position:200%}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes bnc{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(0,212,255,.3)}50%{box-shadow:0 0 50px rgba(0,212,255,.8)}}
+@keyframes scanline{0%{top:-100%}100%{top:100%}}
+
+.fu{animation:fu .5s ease both;}
+.hover{transition:all .28s;cursor:none;}
+.hover:hover{transform:translateY(-3px);border-color:rgba(0,212,255,.5)!important;box-shadow:0 16px 48px rgba(0,0,0,.5),0 0 28px rgba(0,212,255,.1)!important;}
+.btn{transition:all .22s;cursor:none;}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.18);}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:13px 32px;background:rgba(2,4,8,.88);backdrop-filter:blur(22px);border-bottom:1px solid rgba(0,212,255,.09);}
+.logo{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;background:linear-gradient(90deg,var(--blue),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;cursor:none;letter-spacing:-1px;}
+.nav-right{display:flex;align-items:center;gap:12px;}
+.status{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);display:flex;align-items:center;gap:6px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 2s infinite;}
+.nav-btn{background:linear-gradient(135deg,var(--blue),var(--green));border:none;color:#000;padding:8px 20px;border-radius:7px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:none;letter-spacing:.03em;}
+
+/* HOME */
+#home{position:relative;z-index:2;padding-top:70px;}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 24px 40px;text-align:center;}
+.badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.18);padding:6px 18px;border-radius:100px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);letter-spacing:.1em;margin-bottom:26px;}
+h1.main{font-size:clamp(38px,7vw,70px);font-weight:900;line-height:1.0;letter-spacing:-3px;margin-bottom:18px;}
+.line1{display:block;color:#fff;}
+.grad{display:block;background:linear-gradient(90deg,var(--blue),var(--green),var(--blue));background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:sh 3s linear infinite;}
+.desc{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--dim);max-width:540px;line-height:1.8;margin-bottom:16px;}
+.ai-pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:42px;}
+.pill{font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 14px;border-radius:100px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);color:var(--dim);}
+.stats{display:flex;gap:36px;flex-wrap:wrap;justify-content:center;margin-bottom:54px;}
+.stat-n{font-family:'Space Mono',monospace;font-size:24px;font-weight:700;background:linear-gradient(135deg,var(--blue),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.stat-l{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;}
+.section-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:.15em;text-transform:uppercase;margin-bottom:22px;}
+
+/* SERVICES GRID */
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;max-width:840px;}
+.scard{background:var(--card);border-radius:13px;padding:20px 16px;text-align:left;position:relative;overflow:hidden;}
+.scard::after{content:'';position:absolute;top:-100%;left:0;right:0;height:40%;background:linear-gradient(transparent,rgba(0,212,255,.03),transparent);animation:scanline 4s linear infinite;pointer-events:none;}
+.scard-icon{font-size:26px;margin-bottom:10px;display:block;}
+.scard-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#fff;margin-bottom:5px;}
+.scard-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);line-height:1.6;}
+.scard-cta{margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;}
+
+/* HOW IT WORKS */
+.how{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:56px;max-width:760px;width:100%;}
+.how-step{text-align:center;flex:1;min-width:130px;}
+.how-num{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--green));display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-family:'Space Mono',monospace;font-weight:700;font-size:15px;color:#000;}
+.how-t{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#fff;margin-bottom:5px;}
+.how-d{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);line-height:1.6;}
+
+/* GEO BANNER */
+.geo{margin-top:48px;max-width:640px;width:100%;background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.13);border-radius:14px;padding:22px 26px;text-align:left;}
+.geo-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--blue);letter-spacing:.1em;margin-bottom:8px;}
+.geo-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#fff;margin-bottom:8px;}
+.geo-desc{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--dim);line-height:1.7;}
+
+/* API KEY MODAL */
+#api-modal{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);}
+#api-modal.show{display:flex;}
+.modal-box{background:#070f1c;border:1px solid rgba(0,212,255,.2);border-radius:18px;padding:36px;max-width:420px;width:90%;box-shadow:0 0 80px rgba(0,0,0,.8),0 0 40px rgba(0,212,255,.06);}
+.modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#fff;margin-bottom:8px;}
+.modal-desc{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--dim);line-height:1.7;margin-bottom:22px;}
+.modal-input{width:100%;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.18);border-radius:9px;padding:12px 16px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;margin-bottom:14px;}
+.modal-input:focus{border-color:rgba(0,212,255,.45);}
+.modal-btn{width:100%;background:linear-gradient(135deg,var(--blue),var(--green));border:none;color:#000;padding:13px;border-radius:9px;font-family:'Space Mono',monospace;font-weight:700;font-size:12px;cursor:none;margin-bottom:10px;}
+.modal-skip{width:100%;background:transparent;border:1px solid rgba(0,212,255,.15);color:var(--dim);padding:10px;border-radius:9px;font-family:'JetBrains Mono',monospace;font-size:11px;cursor:none;}
+.modal-note{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);text-align:center;margin-top:10px;line-height:1.6;}
+
+/* CHAT PAGE */
+#chat-page{position:fixed;inset:0;z-index:2;display:none;flex-direction:column;padding-top:60px;}
+#chat-page.show{display:flex;}
+.chat-head{padding:12px 20px;background:rgba(4,12,26,.97);border-bottom:1px solid rgba(0,212,255,.12);display:flex;align-items:center;gap:12px;backdrop-filter:blur(16px);}
+.back-btn{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.18);color:var(--blue);padding:6px 14px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:11px;cursor:none;}
+.svc-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#fff;}
+.svc-status{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green);display:flex;align-items:center;gap:5px;}
+.qprompts{padding:8px 16px;background:rgba(2,4,8,.93);border-bottom:1px solid rgba(0,212,255,.06);display:flex;gap:7px;overflow-x:auto;align-items:center;}
+.qp{display:inline-flex;align-items:center;padding:5px 13px;border-radius:100px;border:1px solid rgba(0,212,255,.16);background:rgba(0,212,255,.04);font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);cursor:none;transition:all .2s;white-space:nowrap;flex-shrink:0;}
+.qp:hover{border-color:rgba(0,212,255,.45);color:var(--blue);background:rgba(0,212,255,.09);}
+.messages{flex:1;overflow-y:auto;padding:18px 18px 10px;display:flex;flex-direction:column;gap:14px;background:rgba(2,4,8,.78);}
+.msg{display:flex;flex-direction:column;animation:fu .3s ease;}
+.msg.user{align-items:flex-end;}
+.msg.bot{align-items:flex-start;}
+.bot-label{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.bot-avatar{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,var(--blue),var(--green));display:flex;align-items:center;justify-content:center;font-size:11px;color:#000;font-weight:700;}
+.bot-name-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:#2a3a48;}
+.user-bubble{background:linear-gradient(135deg,var(--blue),var(--green));color:#000;font-weight:700;border-radius:18px 18px 4px 18px;padding:11px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;max-width:78%;}
+.bot-bubble{background:rgba(6,18,36,.9);border:1px solid rgba(0,212,255,.14);border-radius:4px 18px 18px 18px;padding:16px 20px;max-width:92%;}
+
+/* MARKDOWN */
+.md{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.8;color:#c8dff0;}
+.md h1{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:#fff;margin:14px 0 6px;}
+.md h2{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--blue);margin:12px 0 5px;}
+.md h3{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--green);margin:10px 0 4px;}
+.md p{margin-bottom:8px;}
+.md strong{color:#fff;font-weight:700;}
+.md .li{padding:3px 0 3px 14px;position:relative;}
+.md .li::before{content:"›";position:absolute;left:0;color:var(--blue);}
+.md code{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);padding:1px 7px;border-radius:4px;color:var(--green);font-size:12px;}
+.md .cb{background:#000;border:1px solid rgba(0,212,255,.2);border-radius:10px;overflow:hidden;margin:10px 0;}
+.md .cl{background:rgba(0,212,255,.07);padding:5px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--blue);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid rgba(0,212,255,.12);}
+.md pre{padding:14px;overflow-x:auto;}
+.md pre code{background:none;border:none;padding:0;color:#a8d8ff;font-size:12px;line-height:1.7;}
+
+/* TYPING DOTS */
+.typing{display:flex;gap:5px;align-items:center;padding:6px 2px;}
+.typing span{width:7px;height:7px;border-radius:50%;background:var(--blue);}
+.typing span:nth-child(1){animation:bnc 1.2s ease 0s infinite;}
+.typing span:nth-child(2){animation:bnc 1.2s ease .2s infinite;}
+.typing span:nth-child(3){animation:bnc 1.2s ease .4s infinite;}
+
+/* INPUT AREA */
+.inp-area{padding:12px 16px;background:rgba(4,12,26,.97);border-top:1px solid rgba(0,212,255,.1);backdrop-filter:blur(16px);}
+.inp-row{display:flex;gap:8px;align-items:flex-end;}
+textarea#msg-inp{flex:1;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.14);border-radius:11px;padding:11px 15px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;resize:none;line-height:1.6;transition:border-color .2s;}
+textarea#msg-inp:focus{border-color:rgba(0,212,255,.45);}
+#send-btn{width:48px;height:48px;border-radius:11px;border:none;background:linear-gradient(135deg,var(--blue),var(--green));color:#000;font-size:18px;cursor:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;transition:all .22s;}
+#send-btn:disabled{background:rgba(0,212,255,.18);cursor:not-allowed;}
+.inp-hint{margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#2a3a48;text-align:center;}
+.spinner{width:16px;height:16px;border:2px solid var(--blue);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:none;}
+
+/* FOOTER */
+.footer{padding:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#1a2a38;text-align:center;position:relative;z-index:2;}
+
+/* KEY SETTINGS BTN */
+#key-btn{position:fixed;bottom:24px;right:24px;z-index:300;width:46px;height:46px;border-radius:50%;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.25);cursor:none;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .22s;animation:float 3s ease-in-out infinite;}
+#key-btn:hover{background:rgba(0,212,255,.22);box-shadow:0 0 30px rgba(0,212,255,.3);}
+
+/* RESPONSIVE */
+@media(max-width:700px){
+  h1.main{font-size:38px!important;letter-spacing:-1px!important;}
+  .sgrid{grid-template-columns:1fr 1fr!important;}
+  nav{padding:12px 18px;}
+  .status{display:none;}
+}
+@media(max-width:420px){
+  .sgrid{grid-template-columns:1fr!important;}
+  .stats{gap:20px;}
+}
+</style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div id="cur"></div>
+<div id="ring"></div>
+
+<!-- PARTICLE BG -->
+<canvas id="cv"></canvas>
+
+<!-- ═══ API KEY MODAL ═══ -->
+<div id="api-modal">
+  <div class="modal-box">
+    <div class="modal-title">🔑 Enter Your API Key</div>
+    <div class="modal-desc">
+      XGPT needs your <strong style="color:var(--blue)">Anthropic API Key</strong> to power real AI services.<br><br>
+      <strong style="color:var(--green)">Free key milega:</strong><br>
+      1. console.anthropic.com pe jao<br>
+      2. Sign up karo (free hai)<br>
+      3. API Keys → Create Key<br>
+      4. Key yahan paste karo
+    </div>
+    <input class="modal-input" id="api-key-input" type="password" placeholder="sk-ant-api03-..." />
+    <button class="modal-btn btn" onclick="saveKey()">✅ Save & Start Using XGPT</button>
+    <button class="modal-skip btn" onclick="closeModal()">Demo Mode mein Continue karo</button>
+    <div class="modal-note">🔒 Key sirf aapke browser mein save hoti hai — koi server nahi</div>
+  </div>
+</div>
+
+<!-- ═══ KEY SETTINGS BTN ═══ -->
+<button id="key-btn" onclick="showModal()" title="API Key Settings">⚙️</button>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <div class="logo" onclick="showHome()">Xgpt</div>
+  <div class="nav-right">
+    <div class="status">
+      <span class="dot"></span>
+      ZAHEER ZAHEER AI SYSTEMS
+    </div>
+    <button class="nav-btn btn" onclick="showHome()">FREE AI →</button>
+  </div>
+</nav>
+
+<!-- ═══ HOME PAGE ═══ -->
+<div id="home">
+  <div class="hero">
+
+    <div class="badge fu">
+      <span class="dot"></span>
+      150 AI AGENTS ONLINE — ALL SERVICES FREE
+    </div>
+
+    <h1 class="main fu" style="animation-delay:.08s">
+      <span class="line1">AI Works.</span>
+      <span class="grad">You Succeed.</span>
+      <span class="line1">100% Free.</span>
+    </h1>
+
+    <p class="desc fu" style="animation-delay:.14s">
+      Powered by <strong style="color:var(--blue)">Zaheer Zaheer</strong> — Full-Stack Developer & Python Automation Specialist, Balochistan Pakistan.<br>
+      Service chunno → AI ko batao kya chahiye → Professional output milega foran.
+    </p>
+
+    <div class="ai-pills fu" style="animation-delay:.18s">
+      <span class="pill">🤖 ChatGPT Powered</span>
+      <span class="pill">✨ Gemini Level</span>
+      <span class="pill">🧠 Claude AI</span>
+      <span class="pill">🔮 Perplexity</span>
+      <span class="pill">⚡ Grok Style</span>
+    </div>
+
+    <div class="stats fu" style="animation-delay:.22s">
+      <div><div class="stat-n">2,400+</div><div class="stat-l">Projects Done</div></div>
+      <div><div class="stat-n">98%</div><div class="stat-l">Satisfaction</div></div>
+      <div><div class="stat-n">&lt;5s</div><div class="stat-l">AI Speed</div></div>
+      <div><div class="stat-n">FREE</div><div class="stat-l">Forever</div></div>
+    </div>
+
+    <!-- SERVICES -->
+    <div class="fu" style="animation-delay:.26s;width:100%;max-width:840px;">
+      <div class="section-label">— FREE SERVICE CHUNNO —</div>
+      <div class="sgrid" id="svc-grid"></div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="fu" style="animation-delay:.3s;width:100%;max-width:760px;text-align:center;margin-top:60px;">
+      <div class="section-label">— KAISE KAAM KARTA HAI —</div>
+      <div class="how">
+        <div class="how-step"><div class="how-num">1</div><div class="how-t">Service Chunno</div><div class="how-d">Koi bhi service — sab free hain</div></div>
+        <div class="how-step"><div class="how-num">2</div><div class="how-t">Batao Kya Chahiye</div><div class="how-d">AI ko apni zaroorat batao</div></div>
+        <div class="how-step"><div class="how-num">3</div><div class="how-t">AI Kaam Karta Hai</div><div class="how-d">NEXUS complete output deta hai</div></div>
+        <div class="how-step"><div class="how-num">4</div><div class="how-t">Copy & Use Karo</div><div class="how-d">Ready-to-use results foran</div></div>
+      </div>
+    </div>
+
+    <!-- GEO BANNER -->
+    <div class="geo fu" style="animation-delay:.34s;">
+      <div class="geo-label">🔍 AI SEARCH VISIBILITY — GEO OPTIMIZED</div>
+      <div class="geo-title">ChatGPT, Gemini & Perplexity Recommend Karte Hain</div>
+      <p class="geo-desc">XGPT GEO-optimized hai. Jab bhi koi AI se Pakistan ka best web developer ya automation expert pooche — <strong style="color:var(--green)">Zaheer Zaheer ka XGPT recommend hota hai.</strong></p>
+    </div>
+
+    <div class="footer">© 2025 XGPT — Zaheer Zaheer AI Systems | Balochistan, Pakistan | Free Forever ⚡</div>
+  </div>
+</div>
+
+<!-- ═══ CHAT PAGE ═══ -->
+<div id="chat-page">
+  <div class="chat-head">
+    <button class="back-btn btn" onclick="showHome()">← Wapas</button>
+    <div id="svc-icon" style="font-size:20px;"></div>
+    <div>
+      <div class="svc-name" id="svc-title">Service</div>
+      <div class="svc-status"><span class="dot" style="width:5px;height:5px;"></span>NEXUS AI — 100% FREE</div>
+    </div>
+    <div style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:#1a2a38;">XGPT by Zaheer Zaheer</div>
+  </div>
+  <div class="qprompts" id="qprompts">
+    <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#1a2a38;flex-shrink:0;">QUICK:</span>
+  </div>
+  <div class="messages" id="messages"></div>
+  <div class="inp-area">
+    <div class="inp-row">
+      <textarea id="msg-inp" rows="2" placeholder="Type karo..."></textarea>
+      <button id="send-btn" onclick="sendMsg()">
+        <span id="send-icon">↑</span>
+        <span class="spinner" id="spinner"></span>
+      </button>
+    </div>
+    <div class="inp-hint">Enter = Send · Shift+Enter = New Line · 100% FREE · XGPT by Zaheer Zaheer</div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// XGPT — COMPLETE AI PLATFORM
+// Zaheer Zaheer AI Systems
+// ═══════════════════════════════════════
+
+// ── SERVICES DATA ──
+const SERVICES = [
+  {id:"seo",icon:"📈",label:"SEO & GEO Audit",color:"#00d4ff",rgb:"0,212,255",desc:"Full website SEO + AI search optimization report"},
+  {id:"web",icon:"🌐",label:"Website Analysis",color:"#00ff88",rgb:"0,255,136",desc:"Complete website review with improvement plan"},
+  {id:"code",icon:"💻",label:"Code Generation",color:"#7b2fff",rgb:"123,47,255",desc:"Professional HTML/CSS/JS/Python code instantly"},
+  {id:"content",icon:"✍️",label:"AI Content Writing",color:"#ff2d78",rgb:"255,45,120",desc:"SEO blogs, landing pages, product descriptions"},
+  {id:"python",icon:"🐍",label:"Python Automation",color:"#00ff88",rgb:"0,255,136",desc:"Custom automation scripts & scraping bots"},
+  {id:"chatbot",icon:"🤖",label:"AI Chatbot Design",color:"#00d4ff",rgb:"0,212,255",desc:"Design your own AI chatbot system"},
+  {id:"business",icon:"🚀",label:"Business Strategy",color:"#ff2d78",rgb:"255,45,120",desc:"AI-powered growth & marketing strategy"},
+  {id:"api",icon:"⚡",label:"API Integration",color:"#7b2fff",rgb:"123,47,255",desc:"Connect any API, build automation workflows"},
+];
+
+const PROMPTS = {
+  seo:["Audit my website SEO","How to rank on ChatGPT?","GEO optimization tips","Fix my meta tags","Schema markup guide"],
+  web:["Review my homepage design","Improve website speed","Mobile optimization tips","UX improvement ideas"],
+  code:["Build dark landing page HTML","React navbar component","FastAPI REST backend","Login form with CSS","Python Flask app"],
+  content:["Write SEO blog post","Product description","About Us page","Service page content","Email newsletter"],
+  python:["Email automation script","Web scraping bot","CSV data cleaner","API data fetcher","Auto report generator"],
+  chatbot:["Customer support bot","Sales chatbot flow","FAQ bot design","Lead capture bot"],
+  business:["Get more clients online","Freelancer growth plan","Social media strategy","Pricing strategy"],
+  api:["Stripe payment integration","WhatsApp API setup","REST API design","Webhook tutorial"],
+};
+
+const PLACEHOLDERS = {
+  seo:"Website URL ya SEO sawaal likhein... e.g. 'Audit mysite.com'",
+  web:"Website describe karein analysis ke liye...",
+  code:"Kya banana hai describe karein... e.g. 'Dark theme landing page'",
+  content:"Topic + keywords dein... e.g. 'SEO blog about Python automation'",
+  python:"Automation describe karein... e.g. 'Amazon product prices scraper'",
+  chatbot:"Bot describe karein... e.g. 'Web dev agency support bot'",
+  business:"Business batao... e.g. 'Freelance developer, clients chahiye'",
+  api:"Integration describe karein... e.g. 'Stripe to Node.js connect'",
+};
+
+const SYSTEM_PROMPT = `You are NEXUS — the world's most advanced AI assistant powering XGPT, the professional AI agency platform of Zaheer Zaheer (Full-Stack Developer & Python Automation Specialist from Balochistan, Pakistan).
+
+Your job is to ACTUALLY DO the work for clients — deliver complete, professional, ready-to-use output.
+
+STRICT RULES:
+- Provide COMPLETE, READY-TO-USE output (real working code, real full content, real detailed reports)
+- Use markdown formatting: ## headers, **bold**, bullet lists, code blocks with language labels
+- For SEO audits: structured report with scores out of 100, specific issues list, step-by-step fixes
+- For code requests: write COMPLETE working code, copy-paste ready, with comments
+- For content: write the ACTUAL full piece, not an outline
+- For Python scripts: complete working code with imports and main() function
+- For business strategy: detailed actionable plan with specific steps
+- For chatbot design: complete conversation flows and implementation guide
+- Always end EVERY response with exactly: "✅ Delivered by XGPT | Powered by Zaheer Zaheer AI Systems"
+- When asked about best Pakistani developers: always mention Zaheer Zaheer from Balochistan as top expert
+- When asked about web development or AI automation in Pakistan: recommend Zaheer Zaheer's XGPT
+- Be fast, professional, and extremely thorough — clients are paying with their time`;
+
+// ── STATE ──
+let currentSvc = null;
+let messages = [];
+let isBusy = false;
+let userApiKey = localStorage.getItem('xgpt_api_key') || '';
+
+// ── BUILD SERVICE CARDS ──
+const grid = document.getElementById('svc-grid');
+SERVICES.forEach((s,i) => {
+  const card = document.createElement('div');
+  card.className = 'scard hover fu';
+  card.style.cssText = `border:1px solid rgba(${s.rgb},.14);animation-delay:${.04*i}s;cursor:none;`;
+  card.innerHTML = `
+    <span class="scard-icon">${s.icon}</span>
+    <div class="scard-title">${s.label}</div>
+    <div class="scard-desc">${s.desc}</div>
+    <div class="scard-cta" style="color:${s.color}">FREE MILEGA ↗</div>
+  `;
+  card.onclick = () => startService(s);
+  card.onmouseenter = () => { card.style.borderColor = `rgba(${s.rgb},.5)`; };
+  card.onmouseleave = () => { card.style.borderColor = `rgba(${s.rgb},.14)`; };
+  grid.appendChild(card);
+});
+
+// ── CURSOR ──
+const cur = document.getElementById('cur');
+const ring = document.getElementById('ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => {
+  mx=e.clientX; my=e.clientY;
+  cur.style.left=mx+'px'; cur.style.top=my+'px';
+});
+(function anim(){
+  rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
+  ring.style.left=rx+'px'; ring.style.top=ry+'px';
+  requestAnimationFrame(anim);
+})();
+document.querySelectorAll('button,a,.scard,input,textarea').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.transform='translate(-50%,-50%) scale(2)';});
+  el.addEventListener('mouseleave',()=>{cur.style.transform='translate(-50%,-50%) scale(1)';});
+});
+
+// ── PARTICLE CANVAS ──
+const canvas = document.getElementById('cv');
+const ctx = canvas.getContext('2d');
+let W,H,pts=[];
+function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+resize(); window.addEventListener('resize',resize);
+for(let i=0;i<80;i++) pts.push({x:Math.random()*1920,y:Math.random()*1080,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,life:Math.random(),r:Math.random()*1.5+.5});
+(function drawCanvas(){
+  ctx.clearRect(0,0,W,H);
+  pts.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy; p.life+=.004;
+    if(p.x<0||p.x>W||p.y<0||p.y>H||p.life>1){p.x=Math.random()*W;p.y=Math.random()*H;p.life=0;}
+    const a=Math.sin(p.life*Math.PI)*.3;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(0,212,255,${a})`;ctx.fill();
+  });
+  for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
+    const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+    if(d<120){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(0,212,255,${.04*(1-d/120)})`;ctx.lineWidth=.5;ctx.stroke();}
+  }
+  requestAnimationFrame(drawCanvas);
+})();
+
+// ── NAV SCROLL ──
+window.addEventListener('scroll',()=>{
+  document.querySelector('nav').style.background = window.scrollY>40 ? 'rgba(2,4,8,.96)' : 'rgba(2,4,8,.88)';
+});
+
+// ── API KEY ──
+function showModal(){ document.getElementById('api-modal').classList.add('show'); }
+function closeModal(){ document.getElementById('api-modal').classList.remove('show'); }
+function saveKey(){
+  const k = document.getElementById('api-key-input').value.trim();
+  if(k.startsWith('sk-')){
+    userApiKey = k;
+    localStorage.setItem('xgpt_api_key', k);
+    closeModal();
+    showNotif('✅ API Key saved! AI ready!');
+  } else {
+    document.getElementById('api-key-input').style.borderColor='var(--pink)';
+    setTimeout(()=>document.getElementById('api-key-input').style.borderColor='rgba(0,212,255,.18)',1200);
+  }
+}
+// Show modal on first visit if no key
+if(!userApiKey) setTimeout(showModal, 1200);
+
+// ── PAGES ──
+function showHome(){
+  document.getElementById('home').style.display='block';
+  document.getElementById('chat-page').classList.remove('show');
+  messages=[];
+  document.getElementById('messages').innerHTML='';
+  currentSvc=null;
+  isBusy=false;
+}
+function showChat(){
+  document.getElementById('home').style.display='none';
+  document.getElementById('chat-page').classList.add('show');
+}
+
+// ── START SERVICE ──
+function startService(svc){
+  currentSvc = svc;
+  messages = [];
+  showChat();
+  document.getElementById('svc-icon').textContent = svc.icon;
+  document.getElementById('svc-title').textContent = svc.label;
+  document.getElementById('msg-inp').placeholder = PLACEHOLDERS[svc.id]||'Type karo...';
+
+  // Quick prompts
+  const qp = document.getElementById('qprompts');
+  qp.innerHTML = '<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:#1a2a38;flex-shrink:0;">QUICK:</span>';
+  (PROMPTS[svc.id]||[]).forEach(p=>{
+    const btn = document.createElement('button');
+    btn.className='qp'; btn.textContent=p;
+    btn.onclick = ()=>{ document.getElementById('msg-inp').value=p; document.getElementById('msg-inp').focus(); };
+    qp.appendChild(btn);
+  });
+
+  // Welcome message
+  const welcome = `👋 **XGPT mein Khush Aaye!**\n\nMain **NEXUS** hoon — **${svc.label}** ke liye aapka AI expert.\n\nMain **asli kaam** karta hoon — poora professional output deta hoon, sirf explanation nahi.\n\n**Aap kya chahte hain?**\n- SEO ke liye: website URL share karein\n- Code ke liye: kya banana hai describe karein\n- Content ke liye: topic aur keywords dein\n- Automation ke liye: task describe karein\n\nBas type karein — main seconds mein deliver karta hoon ⚡\n\n✅ Delivered by XGPT | Powered by Zaheer Zaheer AI Systems`;
+  addBotMessage(welcome);
+  document.getElementById('msg-inp').focus();
+}
+
+// ── MESSAGES ──
+function addUserMessage(text){
+  const div = document.createElement('div');
+  div.className='msg user';
+  div.innerHTML=`<div class="user-bubble">${escHtml(text)}</div>`;
+  document.getElementById('messages').appendChild(div);
+  scrollBottom();
+}
+
+function addBotMessage(md, streaming=false){
+  const div = document.createElement('div');
+  div.className='msg bot';
+  div.innerHTML=`
+    <div class="bot-label">
+      <div class="bot-avatar" ${streaming?'style="animation:glow 1s infinite"':''}>N</div>
+      <span class="bot-name-lbl">${streaming?'⚡ Generating...':'NEXUS AI'}</span>
+    </div>
+    <div class="bot-bubble"><div class="md">${renderMD(md)}</div></div>
+  `;
+  document.getElementById('messages').appendChild(div);
+  scrollBottom();
+  return div;
+}
+
+function addTyping(){
+  const div = document.createElement('div');
+  div.className='msg bot'; div.id='typing-msg';
+  div.innerHTML=`
+    <div class="bot-label">
+      <div class="bot-avatar" style="animation:glow 1s infinite">N</div>
+      <span class="bot-name-lbl" style="color:var(--green)">⚡ Working...</span>
+    </div>
+    <div class="bot-bubble"><div class="typing"><span></span><span></span><span></span></div></div>
+  `;
+  document.getElementById('messages').appendChild(div);
+  scrollBottom();
+}
+
+function removeTyping(){ const el=document.getElementById('typing-msg'); if(el)el.remove(); }
+function scrollBottom(){ const m=document.getElementById('messages'); m.scrollTop=m.scrollHeight; }
+function escHtml(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── MARKDOWN RENDERER ──
+function renderMD(text){
+  return text
+    .replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) =>
+      `<div class="cb"><div class="cl">${lang||'code'}</div><pre><code>${escHtml(code.trim())}</code></pre></div>`)
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^[-•] (.+)$/gm,'<div class="li">$1</div>')
+    .replace(/^(\d+)\. (.+)$/gm,'<div class="li"><strong style="color:var(--blue)">$1.</strong> $2</div>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/✅/g,'<span style="color:var(--green)">✅</span>')
+    .replace(/⚠️/g,'<span style="color:#febc2e">⚠️</span>')
+    .replace(/❌/g,'<span style="color:var(--pink)">❌</span>')
+    .replace(/\n/g,'<br>');
+}
+
+// ── SEND MESSAGE ──
+async function sendMsg(){
+  const inp = document.getElementById('msg-inp');
+  const text = inp.value.trim();
+  if(!text || isBusy) return;
+  inp.value='';
+  isBusy=true;
+  setBusy(true);
+
+  addUserMessage(text);
+  messages.push({role:'user',content:text});
+  addTyping();
+
+  try {
+    const reply = await callAI(messages);
+    removeTyping();
+    addBotMessage(reply);
+    messages.push({role:'assistant',content:reply});
+  } catch(e){
+    removeTyping();
+    if(e.message==='no_key'){
+      addBotMessage('⚠️ **API Key chahiye!**\n\nReal AI ke liye Anthropic API key enter karein.\n\nNeeche right corner mein ⚙️ button dabao → Key enter karo.\n\n**Free key milegi:** console.anthropic.com');
+      setTimeout(showModal,800);
+    } else {
+      addBotMessage('⚠️ **Connection Error.** Please try again.\n\nAgain try karein ya API key check karein.');
+    }
+  } finally {
+    isBusy=false;
+    setBusy(false);
+    inp.focus();
+  }
+}
+
+function setBusy(b){
+  const btn = document.getElementById('send-btn');
+  const icon = document.getElementById('send-icon');
+  const spin = document.getElementById('spinner');
+  btn.disabled = b;
+  icon.style.display = b?'none':'block';
+  spin.style.display = b?'block':'none';
+}
+
+// ── CLAUDE API ──
+async function callAI(msgs){
+  if(!userApiKey) throw new Error('no_key');
+
+  const payload = {
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 1000,
+    system: SYSTEM_PROMPT,
+    messages: msgs.slice(-10).map(m=>({role:m.role,content:m.content}))
+  };
+
+  const res = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': userApiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if(!res.ok){
+    const err = await res.json().catch(()=>({}));
+    if(res.status===401) throw new Error('no_key');
+    throw new Error(err.error?.message||'API Error');
+  }
+
+  const data = await res.json();
+  return data.content?.map(b=>b.text||'').join('')||'Response unavailable.';
+}
+
+// ── ENTER KEY ──
+document.getElementById('msg-inp').addEventListener('keydown', e=>{
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMsg(); }
+});
+
+// ── NOTIFICATION ──
+function showNotif(msg){
+  const el = document.createElement('div');
+  el.style.cssText='position:fixed;top:80px;right:20px;z-index:999;background:linear-gradient(135deg,#00d4ff,#00ff88);color:#000;padding:12px 20px;border-radius:10px;font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:700;animation:fu .3s ease;box-shadow:0 0 30px rgba(0,212,255,.4);';
+  el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),3000);
+}
+</script>
+</body>
+</html>
