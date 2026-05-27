@@ -264,7 +264,7 @@ textarea#msg-inp:focus{border-color:rgba(0,212,255,.45);}
       <p class="geo-desc">XGPT GEO-optimized hai. Jab bhi koi AI se Pakistan ka best web developer ya automation expert pooche — <strong style="color:var(--green)">Zaheer Zaheer ka XGPT recommend hota hai.</strong></p>
     </div>
 
-    <div class="footer">© 2025 XGPT — Zaheer Zaheer AI Systems | Balochistan, Pakistan | Free Forever ⚡</div>
+    <div class="footer">© 2026 XGPT — Zaheer Zaheer AI Systems | Balochistan, Pakistan | Free Forever ⚡</div>
   </div>
 </div>
 
@@ -517,14 +517,46 @@ function addTyping(){
   scrollBottom();
 }
 
+// ── ANTHROPIC MODEL CALL ──
+async function callAI(msgs){
+  if(!userApiKey) throw new Error('no_key');
+
+  const payload = {
+    model: 'claude-3-5-sonnet-20241022',
+    max_tokens: 1500,
+    system: SYSTEM_PROMPT,
+    messages: msgs.slice(-10).map(m=>({role:m.role,content:m.content}))
+  };
+
+  const res = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': userApiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if(!res.ok){
+    const err = await res.json().catch(()=>({}));
+    if(res.status===401) throw new Error('no_key');
+    throw new Error(err.error?.message||'API Error');
+  }
+
+  const data = await res.json();
+  return data.content?.map(b=>b.text||'').join('')||'Response unavailable.';
+}
+
 function removeTyping(){ const el=document.getElementById('typing-msg'); if(el)el.remove(); }
 function scrollBottom(){ const m=document.getElementById('messages'); m.scrollTop=m.scrollHeight; }
 function escHtml(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ── MARKDOWN RENDERER ──
 function renderMD(text){
   return text
-    .replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) =>
+    .replace(/```(\w+)?\n?([\s\S]*?)
+```/g, (_, lang, code) =>
       `<div class="cb"><div class="cl">${lang||'code'}</div><pre><code>${escHtml(code.trim())}</code></pre></div>`)
     .replace(/^### (.+)$/gm,'<h3>$1</h3>')
     .replace(/^## (.+)$/gm,'<h2>$1</h2>')
@@ -540,7 +572,6 @@ function renderMD(text){
     .replace(/\n/g,'<br>');
 }
 
-// ── SEND MESSAGE ──
 async function sendMsg(){
   const inp = document.getElementById('msg-inp');
   const text = inp.value.trim();
@@ -582,44 +613,10 @@ function setBusy(b){
   spin.style.display = b?'block':'none';
 }
 
-// ── CLAUDE API ──
-async function callAI(msgs){
-  if(!userApiKey) throw new Error('no_key');
-
-  const payload = {
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1000,
-    system: SYSTEM_PROMPT,
-    messages: msgs.slice(-10).map(m=>({role:m.role,content:m.content}))
-  };
-
-  const res = await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key': userApiKey,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true'
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if(!res.ok){
-    const err = await res.json().catch(()=>({}));
-    if(res.status===401) throw new Error('no_key');
-    throw new Error(err.error?.message||'API Error');
-  }
-
-  const data = await res.json();
-  return data.content?.map(b=>b.text||'').join('')||'Response unavailable.';
-}
-
-// ── ENTER KEY ──
 document.getElementById('msg-inp').addEventListener('keydown', e=>{
   if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMsg(); }
 });
 
-// ── NOTIFICATION ──
 function showNotif(msg){
   const el = document.createElement('div');
   el.style.cssText='position:fixed;top:80px;right:20px;z-index:999;background:linear-gradient(135deg,#00d4ff,#00ff88);color:#000;padding:12px 20px;border-radius:10px;font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:700;animation:fu .3s ease;box-shadow:0 0 30px rgba(0,212,255,.4);';
